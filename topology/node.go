@@ -1,27 +1,25 @@
 package topology
 
-type Node struct {
+type Node interface {
+	Token() int64
+	DataCenter() string
+}
+
+type node struct {
 	token      int64
 	dataCenter string
 }
 
-type Nodes []*Node
-
-// Len is the number of elements in the collection.
-func (nodes Nodes) Len() int {
-	return len(nodes)
-}
-
-// Less returns whether the element with index i should sort
-// before the element with index j.
-func (nodes Nodes) Less(i int, j int) bool {
-	if nodes[i].token < nodes[j].token {
-		return true
+func NewNode(token int64) Node {
+	return &node{
+		token: token,
 	}
-	return false
 }
 
-// Swap swaps the elements with indexes i and j.
-func (nodes Nodes) Swap(i int, j int) {
-	nodes[i], nodes[j] = nodes[j], nodes[i]
+func (n *node) Token() int64 {
+	return n.token
+}
+
+func (n *node) DataCenter() string {
+	return n.dataCenter
 }
