@@ -25,7 +25,7 @@ func TestRingTopology_AddNode(t *testing.T) {
 	assert.Equal(t, len(r.(*ring).nodes), 1) // TODO: Testing private state feels wrong.
 }
 
-func TestRingTopology_AddDuplicate(t *testing.T) {
+func TestRingTopology_AddDuplicateNode(t *testing.T) {
 	r := NewRing()
 	node := NewNode(0)
 	err := r.AddNode(node)
@@ -49,12 +49,19 @@ func TestRingTopology_AddNode_Sorted(t *testing.T) {
 	assert.Equal(t, nodes[2].Token(), uint64(2))
 }
 
-func TestRingTopology_ReplicationFactorForDataCenter(t *testing.T) {
+func TestRingTopology_AddNamespace(t *testing.T) {
 	r := NewRing()
-	r.SetDataCenter("dc1", 2)
-	r.SetDataCenter("dc1", 3)
+	err := r.AddNamespace("foobar")
 
-	factor, err := r.ReplicationFactorForDataCenter("dc1")
 	assert.NoError(t, err)
-	assert.Equal(t, factor, 3)
+	assert.Equal(t, len(r.Namespaces()), 1)
+}
+
+func TestRingTopology_AddDuplicateNamespace(t *testing.T) {
+	r := NewRing()
+	r.AddNamespace("foobar")
+	err := r.AddNamespace("foobar")
+
+	assert.Error(t, err)
+	assert.Equal(t, len(r.Namespaces()), 1)
 }

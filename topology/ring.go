@@ -6,57 +6,36 @@ import (
 )
 
 var DataCenterNotFoundError = errors.New("Data center not found")
+var NamespaceNotFoundError = errors.New("Namespace not found")
 var NodeRequiredError = errors.New("Node required")
 var DuplicateNodeError = errors.New("Node already exists")
+var DuplicateNamespaceError = errors.New("Namespace already exists")
 
 type Ring interface {
 	Partitioner() Partitioner
-	DataCenters() map[string]int
-	Nodes() Nodes
-	ReplicationFactorForDataCenter(dataCenter string) (int, error)
-	SetDataCenter(dataCenter string, replicationFactor int) error
-	FirstNode() Node
 	AddNode(node Node) error
-	Replicas(node Node, replicationFactor int) (Nodes, error)
+	Nodes() Nodes
+	FirstNode() Node
+	AddNamespace(namespace string) error
+	Namespaces() map[string]Namespace
+	Namespace(namespace string) (Namespace, error)
 }
 
 type ring struct {
 	partitioner Partitioner
-	dataCenters map[string]int
+	namespaces  map[string]Namespace
 	nodes       Nodes
 }
 
 func NewRing() Ring {
 	ring := &ring{}
 	ring.partitioner = NewMurMur3Partitioner()
+	ring.namespaces = make(map[string]Namespace)
 	return ring
 }
 
 func (ring *ring) Partitioner() Partitioner {
 	return ring.partitioner
-}
-
-func (ring *ring) DataCenters() map[string]int {
-	return ring.dataCenters
-}
-
-func (ring *ring) Nodes() Nodes {
-	return ring.nodes
-}
-
-func (ring *ring) ReplicationFactorForDataCenter(dataCenter string) (int, error) {
-	if _, exists := ring.dataCenters[dataCenter]; !exists {
-		return 0, DataCenterNotFoundError
-	}
-	return ring.dataCenters[dataCenter], nil
-}
-
-func (ring *ring) SetDataCenter(dataCenter string, replicationFactor int) error {
-	if ring.dataCenters == nil {
-		ring.dataCenters = make(map[string]int)
-	}
-	ring.dataCenters[dataCenter] = replicationFactor
-	return nil
 }
 
 func (ring *ring) AddNode(node Node) error {
@@ -71,6 +50,10 @@ func (ring *ring) AddNode(node Node) error {
 	return nil
 }
 
+func (ring *ring) Nodes() Nodes {
+	return ring.nodes
+}
+
 func (ring *ring) FirstNode() Node {
 	if len(ring.nodes) == 0 {
 		return nil
@@ -78,11 +61,22 @@ func (ring *ring) FirstNode() Node {
 	return ring.nodes[0]
 }
 
-func (ring *ring) Replicas(node Node, replicationFactor int) (Nodes, error) {
-	if node == nil {
-		return nil, NodeRequiredError
+func (ring *ring) AddNamespace(namespace string) error {
+	if _, ok := ring.namespaces[namespace]; ok {
+		return DuplicateNamespaceError
 	}
-	// TODO
+	ns := NewNamespace(namespace)
+	ring.namespaces[namespace] = ns
+	return nil
+}
 
-	return nil, nil
+func (ring *ring) Namespaces() map[string]Namespace {
+	return ring.namespaces
+}
+
+func (ring *ring) Namespace(namespace string) (Namespace, error) {
+	if ns, ok := ring.namespaces[namespace]; ok {
+		return ns, nil
+	}
+	return nil, NamespaceNotFoundError
 }
