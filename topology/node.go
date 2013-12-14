@@ -10,9 +10,10 @@ type node struct {
 	dataCenter string
 }
 
-func NewNode(token uint64) Node {
+func NewNode(token uint64, datacenter string) Node {
 	return &node{
-		token: token,
+		token:      token,
+		dataCenter: datacenter,
 	}
 }
 

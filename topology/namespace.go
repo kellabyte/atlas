@@ -3,7 +3,7 @@ package topology
 type Namespace interface {
 	Name() string
 	AddDataCenter(dataCenter string, replicationFactor uint)
-	DataCenters() map[string]uint
+	DataCenters() map[string]uint // Map of: datacenter,replication factor
 	ReplicationFactor(dataCenter string) uint
 }
 
